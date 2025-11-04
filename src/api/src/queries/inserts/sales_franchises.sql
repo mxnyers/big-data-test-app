@@ -1,0 +1,26 @@
+INSERT INTO samples.bakehouse.sales_franchises
+(
+  franchiseID,
+  name,
+  city,
+  district,
+  zipcode,
+  country,
+  size,
+  longitude,
+  latitude,
+  supplierID
+)
+VALUES
+(
+  ${franchiseID},
+  ${name},
+  ${city},
+  ${district},
+  ${zipcode},
+  ${country},
+  ${size},
+  ${longitude},
+  ${latitude},
+  ${supplierID}
+);

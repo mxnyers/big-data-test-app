@@ -1,0 +1,26 @@
+INSERT INTO samples.bakehouse.sales_suppliers
+(
+  supplierID,
+  name,
+  ingredient,
+  continent,
+  city,
+  district,
+  size,
+  longitude,
+  latitude,
+  approved
+)
+VALUES
+(
+  ${supplierID},
+  ${name},
+  ${ingredient},
+  ${continent},
+  ${city},
+  ${district},
+  ${size},
+  ${longitude},
+  ${latitude},
+  ${approved}
+);

@@ -1,0 +1,28 @@
+INSERT INTO samples.bakehouse.sales_customers
+(
+  customerID,
+  first_name,
+  last_name,
+  email_address,
+  phone_number,
+  address,
+  city,
+  state,
+  country,
+  postal_zip_code,
+  gender
+)
+VALUES
+(
+  ${customerID},
+  ${first_name},
+  ${last_name},
+  ${email_address},
+  ${phone_number},
+  ${address},
+  ${city},
+  ${state},
+  ${country},
+  ${postal_zip_code},
+  ${gender}
+);
