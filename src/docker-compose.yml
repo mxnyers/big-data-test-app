@@ -1,11 +1,9 @@
-version: "3.9"
-
 services:
   redis:
     image: redis:7-alpine
     command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
     volumes:
-      - ./src/cache/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - /cache/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
     ports:
       - "6379:6379"
     healthcheck:
@@ -16,7 +14,7 @@ services:
 
   api:
     build:
-      context: ./src/api
+      context: /api
       dockerfile: Dockerfile
     environment:
       NODE_ENV: production
@@ -36,7 +34,7 @@ services:
 
   web:
     build:
-      context: ./src/frontend
+      context: /frontend
       dockerfile: Dockerfile
     depends_on:
       - api

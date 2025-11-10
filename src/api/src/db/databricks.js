@@ -18,14 +18,26 @@ export class DatabricksClient {
   }
 
   async query(sql, params = []) {
-    const session = await this.client.openSession();
+    let session;
     try {
+      session = await this.client.openSession();
       const statement = await session.executeStatement(sql, params);
       const result = await statement.fetchAll();
       await statement.close();
       return result;
+    } catch (err) {
+      logger.error({ 
+        error: err.message,
+        sql,
+        params,
+        response: err.response,
+        statusCode: err.statusCode
+      }, 'Databricks query failed');
+      throw err;
     } finally {
-      await session.close();
+      if (session) {
+        await session.close();
+      }
     }
   }
 

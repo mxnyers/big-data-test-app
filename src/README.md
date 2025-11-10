@@ -200,4 +200,71 @@ Debug the frontend:
 
 ---
 
-If you want, I can implement one of the "Recommended improvements" now (background worker or MOCK_DB mode), or add a short integration script to exercise the endpoints automatically.
+## Quick Service Access Guide
+
+### Frontend Web App
+- Main interface: http://localhost:8081
+- This is your primary entry point for viewing and interacting with the data
+
+### API Access
+The API can be accessed in two ways:
+1. **Through Frontend (Recommended)**
+   - Base URL: http://localhost:8081/api/<endpoint>
+   - All API calls are proxied through the frontend's nginx server
+
+2. **Available Endpoints**
+   - GET requests (Read Data):
+     ```
+     /api/sales_customers
+     /api/sales_transactions
+     /api/sales_franchises
+     /api/sales_suppliers
+     /api/media_customer_reviews
+     /api/media_gold_reviews_chunked
+     ```
+   - POST requests (Insert Data):
+     ```bash
+     # Example POST request
+     curl -X POST http://localhost:8081/api/sales_transactions \
+       -H "Content-Type: application/json" \
+       -d '{"field1":"value","field2":123}'
+     ```
+   - Similar patterns for PUT (updates) and DELETE operations
+
+### Redis Cache
+- Port: 6379 (default Redis port)
+- Access via redis-cli:
+  ```powershell
+  redis-cli -h localhost -p 6379 ping
+  ```
+- Or through Docker:
+  ```powershell
+  docker compose exec redis redis-cli ping
+  ```
+
+### Useful Docker Commands
+Monitor and manage your containers:
+```powershell
+# View running containers
+docker compose ps
+
+# View logs (all services)
+docker compose logs -f
+
+# View specific service logs
+docker compose logs -f api
+docker compose logs -f web
+docker compose logs -f redis
+
+# Shell into containers
+docker compose exec api sh
+docker compose exec redis sh
+
+# Rebuild and restart
+docker compose up --build -d
+```
+
+### Health Checks
+- Frontend: http://localhost:8081
+- API Health: http://localhost:8081/api/healthz
+- Redis: Use `redis-cli ping` as shown above

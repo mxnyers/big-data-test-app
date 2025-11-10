@@ -7,10 +7,14 @@ const DynamicTable = ({ endpoint, refreshInterval = 5000 }) => {
   const [newRow, setNewRow] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [editRowData, setEditRowData] = useState({});
 
   const fetchData = async () => {
     try {
-      const response = await fetch(`/api/${endpoint}`);
+      // Add cache-busting timestamp to prevent browser caching
+      const timestamp = Date.now();
+      const response = await fetch(`/api/${endpoint}?_=${timestamp}`);
       if (!response.ok) throw new Error('Data fetch failed');
       
       const result = await response.json();
@@ -37,6 +41,39 @@ const DynamicTable = ({ endpoint, refreshInterval = 5000 }) => {
     setNewRow(prev => ({ ...prev, [column]: value }));
   };
 
+  const handleEditChange = (column, value) => {
+    setEditRowData(prev => ({ ...prev, [column]: value }));
+  };
+
+  const handleEditClick = (index, row) => {
+    setEditingIndex(index);
+    setEditRowData(row);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingIndex(null);
+    setEditRowData({});
+  };
+
+  const handleSaveEdit = async () => {
+    try {
+      const response = await fetch(`/api/${endpoint}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editRowData)
+      });
+
+      if (!response.ok) throw new Error('Failed to update row');
+
+      // refresh and clear edit state
+      await fetchData();
+      setEditingIndex(null);
+      setEditRowData({});
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   const handleSubmit = async () => {
     try {
       const response = await fetch(`/api/${endpoint}`, {
@@ -60,42 +97,66 @@ const DynamicTable = ({ endpoint, refreshInterval = 5000 }) => {
 
   return (
     <div className="dynamic-table">
-      <table>
-        <thead>
-          <tr>
-            {columns.map(column => (
-              <th key={column}>{column}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((row, i) => (
-            <tr key={i}>
+      <div className="table-wrapper">
+        <table style={{ '--col-count': columns.length + 1 }}>
+          <thead>
+            <tr>
               {columns.map(column => (
-                <td key={column}>{row[column]}</td>
+                <th key={column}>{column}</th>
               ))}
+              <th>Actions</th>
             </tr>
-          ))}
-          <tr className="new-row">
-            {columns.map(column => (
-              <td key={column}>
-                <input
-                  type="text"
-                  value={newRow[column] || ''}
-                  onChange={(e) => handleInputChange(column, e.target.value)}
-                  placeholder={`Enter ${column}`}
-                />
-              </td>
+          </thead>
+          <tbody>
+            {data.map((row, i) => (
+              <tr key={i}>
+                {columns.map((column, colIdx) => (
+                  <td key={column}>
+                    {editingIndex === i ? (
+                      <input
+                        className="edit-input"
+                        value={editRowData[column] ?? ''}
+                        onChange={(e) => handleEditChange(column, e.target.value)}
+                      />
+                    ) : (
+                      <span>{row[column]}</span>
+                    )}
+                  </td>
+                ))}
+                <td>
+                  {editingIndex === i ? (
+                    <div className="row-actions">
+                      <button className="btn btn-save" onClick={handleSaveEdit}>Save</button>
+                      <button className="btn btn-cancel" onClick={handleCancelEdit}>Cancel</button>
+                    </div>
+                  ) : (
+                    <div className="row-actions">
+                      <button className="btn btn-edit" onClick={() => handleEditClick(i, row)}>Edit</button>
+                    </div>
+                  )}
+                </td>
+              </tr>
             ))}
-          </tr>
-        </tbody>
-      </table>
-      <button 
-        className="add-row-btn"
-        onClick={handleSubmit}
-      >
-        Add Row
-      </button>
+          </tbody>
+          <tfoot>
+            <tr className="new-row">
+              {columns.map(column => (
+                <td key={column}>
+                  <input
+                    type="text"
+                    value={newRow[column] || ''}
+                    onChange={(e) => handleInputChange(column, e.target.value)}
+                    placeholder={`Enter ${column}`}
+                  />
+                </td>
+              ))}
+              <td>
+                <button className="add-row-btn" onClick={handleSubmit}>Add</button>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
     </div>
   );
 };

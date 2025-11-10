@@ -43,10 +43,19 @@ export default async function installDynamic(app) {
     router.get(routePath, cacheMiddleware(300), async (req, res) => {
       try {
         const result = await databricksClient.query(sqlContent, req.query);
-        res.json(result);
+        if (!result || result.length === 0) {
+          res.json([]);  // Return empty array instead of null/undefined
+        } else {
+          res.json(result);
+        }
       } catch (err) {
         req.log.error({ err }, 'Query error');
-        res.status(500).json({ error: 'Query execution failed' });
+        res.status(500).json({ 
+          error: 'Query execution failed',
+          message: err.message,
+          details: err.response ? err.response : undefined,
+          sql: sqlContent
+        });
       }
     });
   }
