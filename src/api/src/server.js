@@ -3,42 +3,103 @@ import express from "express";
 import helmet from "helmet";
 import compression from "compression";
 import installDynamic from "./routes/dynamic.js";
-import pino from "pino";
-import pinoHttp from "pino-http";
-import { redisCache } from './cache/redis.js';
-import { databricksClient } from './db/databricks.js';
+import clientLogsRouter from "./routes/client-logs.js";
+import { logger, trackEvent } from "./config/logger.js";
+import { pgClient } from './db/postgres.js';
+import { userContextMiddleware } from './middleware/user-context.js';
+import { memoryState } from './state/memory-state.js';
 
 const app = express();
-const logger = pino({ level: process.env.LOG_LEVEL || "info" });
+
+// OpenTelemetry HTTP logging middleware
+app.use((req, res, next) => {
+  const startTime = Date.now();
+  
+  res.on('finish', () => {
+    const duration = Date.now() - startTime;
+    const logData = {
+      method: req.method,
+      url: req.url,
+      statusCode: res.statusCode,
+      duration,
+      userAgent: req.get('user-agent'),
+    };
+    
+    if (res.statusCode >= 400) {
+      logger.error(`${req.method} ${req.url} ${res.statusCode}`, logData);
+    } else {
+      logger.info(`${req.method} ${req.url} ${res.statusCode}`, logData);
+    }
+  });
+  
+  next();
+});
 
 app.use(helmet());
 app.use(compression());
 app.use(express.json({ limit: "1mb" }));
-app.use(pinoHttp({ logger }));
+app.use(express.text({ type: 'text/plain', limit: "1mb" })); // For sendBeacon support
+app.use(userContextMiddleware);
 
 app.get("/healthz", (_, res) => res.json({ ok: true, ts: new Date().toISOString() }));
 
+
+app.get("/status", async (_, res) => {
+  try {
+    // Use Postgres client directly for health/status
+    const dbClient = pgClient;
+    // Simple connection check
+    await dbClient.query('SELECT 1');
+    const dbStatus = dbClient.getConnectionStatus();
+    const stateStats = memoryState.getStats();
+    res.json({
+      ok: true,
+      timestamp: new Date().toISOString(),
+      database: dbStatus,
+      state: stateStats
+    });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: 'Database connection failed', message: err.message });
+  }
+});
+
 async function startServer() {
   try {
-    // Connect to Redis first
-    logger.info('Connecting to Redis...');
-    await redisCache.connect();
-    logger.info('Redis connected successfully');
+    logger.info('Starting server');
 
-    // Connect to Databricks
-    logger.info('Connecting to Databricks...');
-    await databricksClient.connect();
-    logger.info('Databricks connected successfully');
+    // Use Postgres client directly
+    const dbClient = pgClient;
+    const dbType = 'postgres';
+
+    // Initialize connection pool
+    logger.info({ dbType }, `Connecting to ${dbType}...`);
+    await dbClient.connect();
+    logger.info(`${dbType} connection pool initialized`);
+
+    // Test connection
+    logger.info({ dbType }, `Testing ${dbType} connection...`);
+    await dbClient.query('SELECT 1');
+    logger.info(`${dbType} connection initialized`);
+    trackEvent(`${dbType}Connected`, { timestamp: new Date().toISOString() });
 
     // Install dynamic routes
     await installDynamic(app);
     logger.info('Dynamic routes installed');
+    trackEvent('RoutesInstalled', { timestamp: new Date().toISOString() });
+
+    // Install client logs routes (frontend logging)
+    app.use('/api/logs', clientLogsRouter);
+    logger.info('Client logs routes installed');
 
     // Start listening
     const port = process.env.PORT || 8080;
-    app.listen(port, () => logger.info({ port }, "API listening"));
+    app.listen(port, () => {
+      logger.info({ port, dbType }, "API listening");
+      trackEvent('ServerStarted', { port, dbType, timestamp: new Date().toISOString() });
+    });
   } catch (err) {
     logger.error({ err }, "Failed to start server");
+    trackEvent('ServerStartupFailed', { error: err.message });
     process.exit(1);
   }
 }

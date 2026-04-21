@@ -16,11 +16,4 @@ VALUES
   ${transactionID},
   ${customerID},
   ${franchiseID},
-  COALESCE(${dateTime}, CURRENT_TIMESTAMP()),
-  ${product},
-  ${quantity},
-  ${unitPrice},
-  ${totalPrice},
-  ${paymentMethod},
-  ${cardNumber}
-);
+-- Deprecated Databricks INSERT. Replace with Postgres INSERT or stored procedure.

@@ -1,2 +1,1 @@
-DELETE FROM samples.bakehouse.media_customer_reviews
-WHERE new_id = ${new_id};
+-- Deprecated Databricks DELETE. Replace with Postgres DELETE or stored procedure.

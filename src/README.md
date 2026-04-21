@@ -11,10 +11,22 @@ This document explains how to run, debug and test the Bakehouse proof-of-concept
   - Redis: 6379
   - API: 8080 (internal)
   - Web (nginx): 8081 (mapped)
+# Local Debug & Deploy Guide
+
+This document explains how to run, debug and test the Bakehouse proof-of-concept application locally. It is written for Windows PowerShell (v5.1) and assumes Docker is available for the recommended workflow.
+
+## Pre-flight checklist
+
+- Open a PowerShell terminal in the repository root (this project uses `src/` as the working folder in this repo).
+- Ensure Docker Desktop is installed and running.
+- Verify `.env` (under `src/`) contains correct values for `DATABASE_URL` if you want to connect to a real Postgres instance. For quick local testing you can leave the DB variables empty and use mocked data.
+- Ports used by the compose stack:
+  - API: 8080 (internal)
+  - Web (nginx): 8081 (mapped)
 
 ## Run the whole stack with Docker Compose (recommended)
 
-This builds the API and frontend images and launches Redis, API and frontend (nginx).
+This builds the API and frontend images and launches the API and frontend (nginx).
 
 From the repo root run:
 
@@ -35,15 +47,6 @@ Open in a browser:
 Note: By default the API service is `expose`d (internal) in `docker-compose.yml`. If you want to reach the API directly at `http://localhost:8080` from your host, add a `ports` mapping to the `api` service in `docker-compose.yml`.
 
 ## Run services locally without Docker (fast development loop)
-
-If you want to develop and debug code in your editor, run Redis in Docker and run API and frontend locally.
-
-Start Redis only (still using compose):
-
-```powershell
-cd .\src
-docker-compose up -d redis
-```
 
 Start API locally:
 
@@ -114,20 +117,6 @@ Invoke-RestMethod -Method Delete -Uri 'http://localhost:8080/api/sales_transacti
 
 If using nginx-proxied frontend, substitute `http://localhost:8081/api/...` for the URIs above.
 
-## Inspect Redis (write queue & cache)
-
-With docker-compose running you can inspect Redis using the redis-cli in the container:
-
-```powershell
-cd .\src
-# list pending writes
-docker-compose exec redis redis-cli LRANGE write_queue 0 -1
-# list keys
-docker-compose exec redis redis-cli KEYS 'write:*'
-# view a cached GET response (example key)
-docker-compose exec redis redis-cli GET 'GET:/api/sales_transactions'
-```
-
 ## Stream API logs & common failures
 
 Stream API logs:
@@ -138,10 +127,9 @@ docker-compose logs -f api
 ```
 
 Common problems to look for:
-- Databricks authentication errors (missing/invalid env vars). If you don't have credentials expect query failures.
-- Redis connection refused — verify `REDIS_URL` and that redis container is healthy.
+- Database connection errors — verify `DATABASE_URL` and that the target Postgres instance is reachable.
 - SQL files not found — ensure SQL files are placed under `src/api/src/queries/{selects,inserts,updates,deletes}`.
-- Parameter placeholder mismatch — SQL files use `${param}` placeholders; verify the Databricks client you use supports this binding method or adjust accordingly.
+- Parameter placeholder mismatch — SQL files use `${param}` placeholders; verify your DB client binding maps request body/query parameters correctly.
 
 ## Debugging in VS Code
 
@@ -181,22 +169,18 @@ Debug the frontend:
 - [ ] `docker-compose up --build` completes and containers are running.
 - [ ] `docker-compose exec api curl http://localhost:8080/healthz` returns `{ ok: true }` (or `curl` via host if port-mapped).
 - [ ] `GET /api/<route>` returns JSON or informative error.
-- [ ] `POST /api/<insert-route>` returns `{"status":"queued"}` and `LRANGE write_queue` shows a pending write.
-- [ ] API logs show no Redis/Databricks connection errors.
 
 ## Recommended improvements (next steps)
 
-- Background write worker: move write processing out of request handlers and into a dedicated background worker that polls the Redis `write_queue` every N seconds. This decouples writes and improves reliability.
-- `MOCK_DB` dev mode: add a mock mode for the Databricks client to return stubbed data so you can develop frontend and flow without Databricks credentials.
-- Add integration tests or a small script that runs through the GET -> POST -> check queue -> process -> verify flow for one entity.
-- Add a `docker-compose.override.yml` for development which maps API port to host and mounts source volumes for live code edits.
+- Add Postgres stored-procedure examples under `src/api/src/queries/postgres/` and migrate queries from Databricks SQL into Postgres-compatible SQL and parameter bindings.
+- Add integration tests that exercise GET -> POST -> verify DB state flows.
+- Optionally add a small `archive/databricks/` folder and move legacy Databricks SQL files there if you still want history without exposing them to the dynamic router.
 
 ## Where to look in this repo
 
-- API server: `src/api/src` (server, routes, cache, db)
+- API server: `src/api/src` (server, routes, db)
 - Query files loaded dynamically from: `src/api/src/queries/{selects,inserts,updates,deletes}`
 - Frontend app: `src/frontend/src` (React app and `components/DynamicTable.jsx`)
-- Docker compose: `src/docker-compose.yml`
 
 ---
 
@@ -204,7 +188,6 @@ Debug the frontend:
 
 ### Frontend Web App
 - Main interface: http://localhost:8081
-- This is your primary entry point for viewing and interacting with the data
 
 ### API Access
 The API can be accessed in two ways:
@@ -231,35 +214,13 @@ The API can be accessed in two ways:
      ```
    - Similar patterns for PUT (updates) and DELETE operations
 
-### Redis Cache
-- Port: 6379 (default Redis port)
-- Access via redis-cli:
-  ```powershell
-  redis-cli -h localhost -p 6379 ping
-  ```
-- Or through Docker:
-  ```powershell
-  docker compose exec redis redis-cli ping
-  ```
-
 ### Useful Docker Commands
 Monitor and manage your containers:
 ```powershell
 # View running containers
 docker compose ps
 
-# View logs (all services)
-docker compose logs -f
-
-# View specific service logs
-docker compose logs -f api
-docker compose logs -f web
-docker compose logs -f redis
-
-# Shell into containers
-docker compose exec api sh
-docker compose exec redis sh
-
+```
 # Rebuild and restart
 docker compose up --build -d
 ```

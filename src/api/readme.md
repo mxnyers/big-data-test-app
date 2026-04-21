@@ -1,6 +1,6 @@
 # API Service
 
-This folder contains the Node/Express API that exposes dynamic routes generated from SQL query files and overlays a Redis cache and write-queue. The API is designed to be lightweight and easily autoscalable as a standalone container in Docker Compose.
+This folder contains the Node/Express API that exposes dynamic routes generated from SQL query files. The project has deprecated the previous Redis-based cache/write-queue and Databricks runtime in favor of a Postgres-backed implementation and a no-op cache layer.
 
 Key files and folders
 - `src/server.js` — Express server bootstrap (middleware: helmet, compression, JSON body parser, pino logging). It calls the dynamic route installer.
@@ -10,18 +10,18 @@ Key files and folders
 	- `PUT /api/<name>` -> queues an UPDATE write
 	- `DELETE /api/<name>` -> queues a DELETE write
 
-- `src/cache/redis.js` — Redis client wrapper used for caching GET results and for storing a `write_queue` list of pending write operations. Exposes helper methods for set/get and queue management.
-- `src/middleware/cache.js` — Express middleware that checks Redis for cached GET responses and caches responses on miss.
-- `src/db/databricks.js` — Databricks SQL client wrapper used to execute queries against the Databricks warehouse. The code is intentionally small so you can swap in a mocked implementation for local development.
+- `src/db/postgres.js` — Postgres client wrapper (using `pg` Pool). Use `DATABASE_URL` env var to point at your AWS-managed Postgres instance. The dynamic router will execute SQL files against Postgres.
+- `src/middleware/cache.js` — Cache middleware is now a no-op since Redis has been deprecated. Leaving the middleware in place avoids breaking imports but it does not perform caching.
 - `src/queries/` — SQL files organized into subfolders: `selects/`, `inserts/`, `updates/`, `deletes/`. Adding a file to any of these directories automatically exposes a route with the same name (filename without `.sql`).
 
 Behavior summary
-- On GET: the cache middleware first checks Redis for `GET:/api/<name>`; if present it returns the cached JSON. On a cache miss the query runs against Databricks and the result is cached.
-- On POST/PUT/DELETE: the API enqueues a write object into Redis (so writes are decoupled from request latency). A background worker or the inline processor will pick up queued writes and execute them against Databricks. After successful writes the related GET cache keys are invalidated.
+On GET: the API runs the configured SELECT SQL against Postgres and returns results. The cache middleware is a no-op in the default configuration.
+
+On POST/PUT/DELETE: the API executes the corresponding SQL (or stored procedure) against Postgres. For a production migration you may want to implement a durable write-queue or background worker pattern; the previous implementation used Redis for this decoupling and has been removed.
 
 Notes for developers
 - SQL files use `${param}` placeholders. Ensure the Databricks client binding code maps request body/query parameters correctly. For local development you can implement a `MOCK_DB` mode to return sample data without Databricks credentials.
 - The dynamic router makes it easy to add/remove endpoints by simply adding/removing SQL files.
 
 How to run
-- See project root `README.md` (local debug & deploy guide) for Docker Compose and local dev instructions.
+-- See project root `README.md` (local debug & deploy guide) for Docker Compose and local dev instructions.

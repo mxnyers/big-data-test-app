@@ -1,14 +1,1 @@
-SELECT
-  supplierID,
-  name,
-  ingredient,
-  continent,
-  city,
-  district,
-  size,
-  longitude,
-  latitude,
-  approved
-FROM samples.bakehouse.sales_suppliers
-ORDER BY supplierID
-LIMIT 250;
+-- Deprecated: Databricks SQL removed. Replace with Postgres query or stored procedure in production.

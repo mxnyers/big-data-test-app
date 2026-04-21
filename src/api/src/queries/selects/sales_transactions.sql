@@ -1,14 +1,1 @@
-SELECT
-  transactionID,
-  customerID,
-  franchiseID,
-  dateTime,
-  product,
-  quantity,
-  unitPrice,
-  totalPrice,
-  paymentMethod,
-  cardNumber
-FROM samples.bakehouse.sales_transactions
-ORDER BY dateTime DESC
-LIMIT 250;
+-- Deprecated: Databricks SQL removed. Replace with Postgres query or stored procedure in production.

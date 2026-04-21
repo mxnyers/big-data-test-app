@@ -1,71 +1,75 @@
+
+:root{
+  --bg-top: #07191a; /* subtle teal-black */
+  --bg-bottom: #071213;
+  --sidebar-bg: linear-gradient(180deg,#071814 0%, #04110c 100%);
+  --text: #e9fff0;
+  --muted: #9bdab0;
+  --accent: #29ff5b;
+  --accent-2: #17d6b0;
+  --item-hover: rgba(47,255,119,0.06);
+  --item-active-bg: rgba(47,255,119,0.08);
+}
+
 .app {
   min-height: 100vh;
-  background-color: #fff;
+  background: linear-gradient(180deg,var(--bg-top) 0%, var(--bg-bottom) 100%);
+  color: var(--text);
+  display: flex;
+  font-family: 'Montserrat', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
 }
 
-.app-header {
-  background-color: #002342;
-  padding: 20px 40px;
-  color: white;
-  border-bottom: 4px solid #c72a46;
-}
+.app-layout { align-items: stretch }
 
-.app-header h1 {
-  margin: 0;
-  font-size: 28px;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-}
-
-.app-content {
-  /* take remaining viewport height so grid can split into two rows without scrolling */
-  height: 100%
-}
-
-.table-grid {
-  padding: 3px;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(2, 1fr);
-  gap: 10px;
-  height: 100%;
-}
-
-.table-card {
-  background: #fff;
-  border: 1px solid #e5e5e5;
-  padding: 0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+.sidebar {
+  width: 240px;
+  background: var(--sidebar-bg);
+  padding: 18px 12px;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  gap: 10px;
+  box-shadow: inset -1px 0 0 rgba(255,255,255,0.02);
 }
 
-.table-card h2 {
-  margin: 0;
+.logo img { width: 140px; height: auto; display:block }
+
+.tree { display: flex; flex-direction: column; gap: 6px; margin-top: 6px }
+.group { display: flex; flex-direction: column }
+.group-label { color: var(--muted); font-weight: 700; padding: 6px 4px; display:flex; align-items:center; justify-content:space-between; font-size:13px }
+.group-toggle { background: transparent; border: none; color: var(--muted); text-align: left; padding: 6px 4px; cursor: pointer; display:flex; align-items:center; justify-content:space-between }
+.group-toggle:hover { color: var(--text) }
+.group-toggle .chev { margin-left:8px; opacity:0.8 }
+
+.group-children { display:flex; flex-direction:column; gap:4px; padding-left: 6px; transition: max-height 220ms ease, opacity 180ms ease; overflow: hidden }
+.group-children.expanded { max-height: 400px; opacity: 1 }
+.group-children.collapsed { max-height: 0; opacity: 0 }
+
+.nav-item { background: transparent; color: var(--text); text-decoration: none; padding:8px 10px; cursor:pointer; border-radius:6px; font-size:14px }
+.nav-item:hover { background: var(--item-hover); color: var(--text) }
+.nav-item.active { color: var(--text); background: var(--item-active-bg); border-left: 4px solid var(--accent); padding-left: 8px; }
+
+.app-content { flex: 1 1 auto; display:flex; flex-direction:column }
+
+.app-header {
   padding: 16px 20px;
-  color: #fff;
-  background: #002342;
-  font-size: 18px;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  border-bottom: 2px solid #c72a46;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  background: linear-gradient(90deg, rgba(255,255,255,0.01), transparent);
 }
+
+.app-header h1 { margin: 0; font-size: 18px; font-weight:700 }
+
+.table-grid.single { padding: 16px; display:block }
+
+.table-card { background: transparent; border: none; padding: 16px; }
+.table-card h2 { margin: 0 0 12px 0; color: var(--text) }
+
 
 /* Responsive: stack on narrow screens */
 @media (max-width: 1000px) {
-  .table-grid {
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: auto;
-    height: auto;
-  }
+  .sidebar { display: none }
+  .app { flex-direction: column }
 }
 
 @media (max-width: 640px) {
-  .table-grid {
-    grid-template-columns: 1fr;
-  }
-  .app-content {
-    height: auto;
-  }
+  .nav-item { padding: 6px }
 }

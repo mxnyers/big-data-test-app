@@ -1,2 +1,1 @@
-DELETE FROM samples.bakehouse.sales_transactions
-WHERE transactionID = ${transactionID};
+-- Deprecated Databricks DELETE. Replace with Postgres DELETE or stored procedure.

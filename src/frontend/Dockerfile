@@ -14,4 +14,6 @@ RUN npm run build
 FROM nginx:alpine
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /web/dist /usr/share/nginx/html
+# create logs dir for container (frontend does not write logs to disk normally)
+RUN mkdir -p /var/log/frontend
 EXPOSE 80

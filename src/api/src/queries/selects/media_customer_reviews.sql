@@ -1,8 +1,1 @@
-SELECT
-  review,
-  franchiseID,
-  review_date,
-  new_id
-FROM samples.bakehouse.media_customer_reviews
-ORDER BY review_date DESC
-LIMIT 250;
+-- Deprecated Databricks SELECT. Replace with Postgres SELECT or stored procedure.
