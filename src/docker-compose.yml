@@ -6,13 +6,19 @@ services:
     environment:
       NODE_ENV: production
       PORT: 8080
-      # Postgres connection string (AWS RDS / Aurora)
-      DATABASE_URL: ${DATABASE_URL:-}
-      # OpenTelemetry exporter endpoint for traces
+      PGHOST: ${PGHOST:-nytech-poc-db.c7su6g02q0e9.us-west-1.rds.amazonaws.com}
+      PGPORT: ${PGPORT:-5432}
+      PGDATABASE: ${PGDATABASE:-postgres}
+      PGUSER: ${PGUSER:-postgres}
+      PGPASSWORD: ${PGPASSWORD:-}
+      PGSSL: ${PGSSL:-true}
+      PG_POOL_MAX: ${PG_POOL_MAX:-10}
+      PG_CONNECTION_TIMEOUT_MS: ${PG_CONNECTION_TIMEOUT_MS:-10000}
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
       OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-big-data-test-api}
       ADMIN_API_KEY: ${ADMIN_API_KEY:-changeme}
       LOG_DIR: /app/logs
+      PG_SCHEMA: ${PG_SCHEMA:-public}
     ports:
       - "8080:8080"
     volumes:

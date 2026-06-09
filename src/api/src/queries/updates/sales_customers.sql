@@ -1,1 +1,1 @@
--- Deprecated Databricks UPDATE. Replace with Postgres UPDATE or stored procedure.
+CALL sp_update_sales_customers(${rows_json}::jsonb, ${modified_by});

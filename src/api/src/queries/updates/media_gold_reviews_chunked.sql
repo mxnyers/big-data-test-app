@@ -1,1 +1,1 @@
--- Deprecated Databricks UPDATE. Replace with Postgres UPDATE or stored procedure.
+CALL sp_update_media_gold_reviews_chunked(${rows_json}::jsonb, ${modified_by});

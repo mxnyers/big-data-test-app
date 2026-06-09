@@ -1,1 +1,1 @@
--- Deprecated Databricks INSERT. Replace with Postgres INSERT or stored procedure.
+CALL sp_insert_sales_franchises(${rows_json}::jsonb, ${modified_by});

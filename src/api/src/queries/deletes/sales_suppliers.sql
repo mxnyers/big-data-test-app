@@ -1,2 +1,1 @@
-DELETE FROM samples.bakehouse.sales_suppliers
-WHERE supplierID = ${supplierID};
+CALL sp_delete_sales_suppliers(${rows_json}::jsonb, ${modified_by});

@@ -1,6 +1,10 @@
 .dynamic-table {
   margin: 0;
-  height: auto; /* allow card/container to control overall height */
+  height: 100%;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -13,14 +17,19 @@
   /* Each table card gets its own scroll area */
     color: #eafdf0;
   position: relative;
-  max-height: 420px; /* default visible rows height; adjust as needed */
-  overflow: auto;
+  max-height: 100%;
+  overflow: hidden;
 }
 
 /* Ensure scrollbars are always visible */
 .table-wrapper {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   scrollbar-width: auto;
   scrollbar-color: rgba(255,255,255,0.1) transparent;
+  overflow-x: auto;
+  overflow-y: auto;
 }
 
 .table-wrapper::-webkit-scrollbar {
@@ -61,7 +70,12 @@
 /* DynamicTable styles - readable, Databricks-inspired dark theme */
 .dynamic-table {
   margin: 0;
-  height: auto; /* allow card/container to control overall height */
+  height: 100%;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 0;
+  max-height: 100%;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -69,14 +83,20 @@
   border-radius: 8px;
   color: #eafdf0;
   font-family: 'Montserrat', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  overflow: hidden;
 }
 
 .table-wrapper {
   /* Each table card gets its own scroll area */
   flex: 1 1 auto;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 0;
   position: relative;
-  max-height: 520px; /* default visible rows height; adjust as needed */
-  overflow: auto;
+  max-height: 100%;
+  overflow-x: auto;
+  overflow-y: auto;
 }
 
 /* Ensure scrollbars are always visible */
@@ -208,3 +228,140 @@
 
 .unsaved { outline: 2px solid rgba(80,255,150,0.06); }
 .buffered-row { background: rgba(80,255,150,0.03) }
+
+.toast-container {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.toast {
+  position: fixed;
+  right: 16px;
+  width: min(380px, calc(100vw - 32px));
+  padding: 14px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: #082018;
+  color: #eafdf0;
+  box-shadow: 0 12px 28px rgba(0,0,0,0.32);
+  pointer-events: auto;
+}
+
+.toast-success {
+  border-color: rgba(41,255,91,0.35);
+  background: #062617;
+}
+
+.toast-error {
+  border-color: rgba(255,89,111,0.45);
+  background: #2a0710;
+}
+
+.toast-info {
+  border-color: rgba(45,219,212,0.35);
+}
+
+.toolbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 0 10px;
+}
+
+.save-btn,
+.delete-selected-btn {
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  min-height: 40px;
+}
+
+.save-btn {
+  padding: 10px 16px;
+  background: linear-gradient(90deg,#3dec86,#18c37f);
+  color: #06220b;
+}
+
+.unsaved-indicator {
+  color: #9bdab0;
+  font-size: 13px;
+}
+
+.table-actions {
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  padding-top: 10px;
+  background: rgba(0,0,0,0.04);
+}
+
+.table-actions .add-row-btn,
+.table-actions .delete-selected-btn {
+  width: 100%;
+}
+
+.delete-selected-btn {
+  padding: 10px 18px;
+  background: rgba(255,255,255,0.06);
+  color: #eafdf0;
+}
+
+.delete-selected-btn:not(:disabled):hover,
+.save-btn:hover,
+.table-actions .add-row-btn:hover {
+  transform: translateY(-1px);
+}
+
+.delete-selected-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.cell-content {
+  min-height: 24px;
+  cursor: text;
+}
+
+.cell-input {
+  width: 100%;
+  min-width: 120px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  background: rgba(255,255,255,0.04);
+  color: #eafdf0;
+  font: inherit;
+}
+
+.cell-input:focus {
+  border-color: rgba(80,255,150,0.8);
+  outline: none;
+  box-shadow: 0 0 8px rgba(80,255,150,0.08);
+}
+
+.actions-column,
+.actions-cell {
+  min-width: 92px;
+}
+
+.cancel-row-btn,
+.revert-row-btn {
+  min-width: 34px;
+  min-height: 30px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.06);
+  color: #eafdf0;
+  cursor: pointer;
+}

@@ -31,6 +31,14 @@ const DynamicTable = ({ endpoint, refreshInterval = 5000, requiredFields = [], u
   useEffect(() => { changedCellsRef.current = changedCells; }, [changedCells]);
   useEffect(() => { newRowsRef.current = newRows; }, [newRows]);
 
+  useEffect(() => {
+    setSelectedRows(new Set());
+    setEditingCell(null);
+    setChangedCells(new Map());
+    setNewRows([]);
+    setHasUnsavedChanges(false);
+  }, [endpoint]);
+
   const showToast = (message, type = 'info', duration = 5000) => {
     const id = `${Date.now()}-${Math.random().toString(36).slice(2,9)}`;
     setToasts((t) => [...t, { id, message, type }]);
@@ -129,6 +137,9 @@ const DynamicTable = ({ endpoint, refreshInterval = 5000, requiredFields = [], u
     setData(newData);
     setNewRows([...newRowsRef.current, newIndex]);
     setHasUnsavedChanges(true);
+    if ((columns || []).length > 0) {
+      setEditingCell({ rowIndex: newIndex, column: columns[0] });
+    }
     showToast('New row added (unsaved)', 'info');
     telemetry('AddRow', { endpoint });
 
@@ -274,7 +285,7 @@ const DynamicTable = ({ endpoint, refreshInterval = 5000, requiredFields = [], u
     <div className="dynamic-table">
       <div className="toast-container">
         {toasts.map((t, idx) => (
-          <div key={t.id} className={`toast toast-${t.type}`} style={{ top: `${80 + idx * 72}px` }}>{t.message}</div>
+          <div key={t.id} className={`toast toast-${t.type}`} style={{ top: `${16 + idx * 72}px` }}>{t.message}</div>
         ))}
       </div>
 
@@ -309,7 +320,9 @@ const DynamicTable = ({ endpoint, refreshInterval = 5000, requiredFields = [], u
                     const cellValue = row[column] ?? '';
                     return (
                       <td key={column}>
-                        {isEditing ? (
+                        {isNew ? (
+                          <input className="cell-input" value={cellValue} onChange={(e)=>handleCellChange(rowIndex, column, e.target.value)} />
+                        ) : isEditing ? (
                           <input autoFocus className="cell-input" value={cellValue} onChange={(e)=>handleCellChange(rowIndex, column, e.target.value)} onBlur={handleCellBlur} onKeyDown={(e)=>{ if (e.key==='Enter') setEditingCell(null); if (e.key==='Escape') setEditingCell(null); }} />
                         ) : (
                           <div role="button" tabIndex={0} className={`cell-content ${isSaving ? 'disabled':''}`} onClick={()=>handleCellClick(rowIndex, column)} onKeyDown={(e)=>{ if (e.key==='Enter' || e.key===' ') handleCellClick(rowIndex, column); }}>{cellValue}</div>
@@ -325,19 +338,11 @@ const DynamicTable = ({ endpoint, refreshInterval = 5000, requiredFields = [], u
               );
             })}
           </tbody>
-          <tfoot>
-            <tr>
-              <td colSpan={(columns||[]).length + 1}>
-                <div className="bottom-row">
-                  <button className="add-row-btn" onClick={handleAddRow}>+ Add Row</button>
-                  <div className="bulk-actions">
-                    <button className="btn" onClick={handleBulkDelete} disabled={selectedRows.size===0}>Delete Selected ({selectedRows.size})</button>
-                  </div>
-                </div>
-              </td>
-            </tr>
-          </tfoot>
         </table>
+      </div>
+      <div className="table-actions">
+        <button className="add-row-btn" onClick={handleAddRow}>+ Add Row</button>
+        <button className="delete-selected-btn" onClick={handleBulkDelete} disabled={selectedRows.size===0}>Delete Selected ({selectedRows.size})</button>
       </div>
     </div>
   );

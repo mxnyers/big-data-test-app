@@ -1,0 +1,1 @@
+psql -h nytech-poc-db.c7su6g02q0e9.us-west-1.rds.amazonaws.com -p 5432 -U postgres -d postgres

@@ -1,2 +1,1 @@
-DELETE FROM samples.bakehouse.sales_franchises
-WHERE franchiseID = ${franchiseID};
+CALL sp_delete_sales_franchises(${rows_json}::jsonb, ${modified_by});

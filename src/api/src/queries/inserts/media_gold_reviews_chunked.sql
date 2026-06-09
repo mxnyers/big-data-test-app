@@ -1,1 +1,1 @@
--- Deprecated Databricks INSERT. Replace with Postgres INSERT or stored procedure.
+CALL sp_insert_media_gold_reviews_chunked(${rows_json}::jsonb, ${modified_by});

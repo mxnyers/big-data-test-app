@@ -15,7 +15,7 @@ const DELETES_DIR = path.join(QUERIES_DIR, 'deletes');
 
 // Helper function to replace schema placeholders in SQL
 function replaceSqlPlaceholders(sql) {
-  const schema = process.env.LAKEBASE_SCHEMA;
+  const schema = process.env.PG_SCHEMA ;
   return sql.replace(/\{schema\}/g, schema);
 }
 
@@ -25,7 +25,7 @@ export default async function installDynamic(app) {
   logger.info('Starting dynamic route installation');
   
   // Ensure queries directories exist
-  const directories = [SELECTS_DIR, INSERTS_DIR];
+  const directories = [SELECTS_DIR, INSERTS_DIR, UPDATES_DIR, DELETES_DIR];
   for (const dir of directories) {
   try {
       await fs.mkdir(dir, { recursive: true });
@@ -236,8 +236,25 @@ export default async function installDynamic(app) {
         const jobId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         logger.info(`${req.userEmail} executing DELETE operation`, { jobId, userEmail: req.userEmail, operation: 'DELETE' });
         
-        // Execute directly to Databricks
-        await dbClient.query(sqlContent, Object.values(req.body));
+        // Normalize DELETE payload to the same JSONB rows format as INSERT/UPDATE
+        const { rows: bodyRows } = req.body;
+        let rows;
+        if (Array.isArray(bodyRows)) {
+          rows = bodyRows;
+        } else if (bodyRows) {
+          rows = [bodyRows];
+        } else if (Array.isArray(req.body)) {
+          rows = req.body;
+        } else {
+          rows = [req.body];
+        }
+
+        const deleteParams = {
+          rows_json: JSON.stringify(rows),
+          modified_by: req.userEmail
+        };
+
+        await dbClient.query(sqlContent, deleteParams);
         // Broadcast data change to all connected clients
         const tableName = path.basename(file, '.sql');
         logger.info(`Broadcasting DELETE to table '${tableName}'`, { table: tableName, userEmail: req.userEmail });

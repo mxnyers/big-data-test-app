@@ -214,7 +214,6 @@ class Logger {
 }
 
 export const logger = new Logger();
-export { tracer, trace, context };
 export default logger;
 
 // Flush logs on page unload to avoid losing logs

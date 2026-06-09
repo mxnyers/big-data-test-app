@@ -1,0 +1,14 @@
+ public             | media_customer_reviews           | table       | postgres
+ public             | media_customer_reviews_audit     | table       | postgres
+ public             | media_gold_reviews_chunked       | table       | postgres
+ public             | media_gold_reviews_chunked_audit | table       | postgres
+ public             | sales_customers                  | table       | postgres
+ public             | sales_customers_audit            | table       | postgres
+ public             | sales_franchises                 | table       | postgres
+ public             | sales_franchises_audit           | table       | postgres
+ public             | sales_suppliers                  | table       | postgres
+ public             | sales_suppliers_audit            | table       | postgres
+ public             | sales_transactions               | table       | postgres
+ public             | sales_transactions_audit         | table       | postgres
+ public             | users                            | table       | postgres
+ public             | users_audit                      | table       | postgres

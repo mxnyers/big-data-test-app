@@ -13,40 +13,40 @@ const isDevelopment = process.env.NODE_ENV !== 'production';
 process.env.OTEL_SERVICE_NAME = process.env.OTEL_SERVICE_NAME || 'nyte-dawg-poc-api';
 process.env.OTEL_SERVICE_VERSION = process.env.OTEL_SERVICE_VERSION || process.env.npm_package_version || '0.1.0';
 
-// Initialize OpenTelemetry for AWS (ADOT) or local collector fallback
+// Initialize OpenTelemetry with OTLP (ADOT) for AWS or local collector
 let sdk;
 try {
   const collectorUrl = process.env.OTEL_EXPORTER_OTLP_ENDPOINT || process.env.AWS_ADOT_COLLECTOR_ENDPOINT || process.env.OTEL_EXPORTER_OTLP_HTTP_ENDPOINT || 'http://host.docker.internal:4318/v1/traces';
 
-  // Attempt to include AWS resource detector when available (non-blocking)
-  let resourcePackage;
-  try {
-    resourcePackage = require('@opentelemetry/resources');
-  } catch (e) {
-    resourcePackage = null;
-  }
+  // Log intent
+  console.info('Initializing OpenTelemetry (OTLP) with exporter URL:', collectorUrl);
 
-  const Resource = resourcePackage ? (resourcePackage.Resource || resourcePackage.default?.Resource || resourcePackage.default || resourcePackage) : null;
-
-  const baseResource = Resource ? new Resource({ 'service.name': process.env.OTEL_SERVICE_NAME || 'nyte-dawg-poc-api' }) : undefined;
-
+  // Create OTLP exporter for traces (ADOT/collector)
   const traceExporter = new OTLPTraceExporter({ url: collectorUrl });
 
+  // Build Node SDK with auto-instrumentations
   sdk = new NodeSDK({
-    resource: baseResource,
     traceExporter,
     instrumentations: [getNodeAutoInstrumentations({ '@opentelemetry/instrumentation-fs': { enabled: false } })],
   });
 
-  const startResult = sdk.start && sdk.start();
-  if (startResult && typeof startResult.then === 'function') {
-    startResult.then(() => console.info('OpenTelemetry started, exporter:', collectorUrl))
-      .catch((err) => console.error('OpenTelemetry failed to start', err));
-  } else {
-    console.info('OpenTelemetry started (sync), exporter:', collectorUrl);
+  // Start SDK; handle both sync and async starts safely
+  try {
+    const startResult = sdk.start && sdk.start();
+    if (startResult && typeof startResult.then === 'function') {
+      startResult.then(() => console.info('OpenTelemetry started, exporter:', collectorUrl))
+        .catch((err) => console.error('OpenTelemetry failed to start (async):', err && err.stack ? err.stack : err));
+    } else {
+      console.info('OpenTelemetry started (sync), exporter:', collectorUrl);
+    }
+  } catch (startErr) {
+    console.error('OpenTelemetry SDK start failed:', startErr && startErr.stack ? startErr.stack : startErr);
+    // best-effort: leave sdk assigned but note failures in logs
   }
 } catch (err) {
-  console.error('OpenTelemetry initialization skipped/failed', err && err.message ? err.message : err);
+  // Non-fatal: log the error and continue running the API without tracing
+  console.error('OpenTelemetry initialization skipped/failed', err && err.stack ? err.stack : err);
+  sdk = undefined;
 }
 
 // Get tracer instance
@@ -236,6 +236,18 @@ process.on('SIGTERM', async () => {
     await sdk.shutdown();
   }
 });
+
+// Expose a safe shutdown helper for external callers
+export async function shutdownTracing() {
+  if (sdk && typeof sdk.shutdown === 'function') {
+    try {
+      await sdk.shutdown();
+    } catch (e) {
+      // Best-effort shutdown; don't throw
+      console.warn('Error shutting down OpenTelemetry SDK', e && e.message ? e.message : e);
+    }
+  }
+}
 
 export { tracer, context, trace };
 export default logger;
